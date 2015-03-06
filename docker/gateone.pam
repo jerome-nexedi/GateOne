@@ -1,0 +1,6 @@
+#%PAM-1.0
+# Login using a htpasswd file
+#@include common-sessionauth
+auth  required  pam_pwdfile.so  pwdfile /etc/gateone/users.passwd
+account required  pam_permit.so
+

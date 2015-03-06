@@ -33,7 +33,7 @@
 FROM ubuntu
 MAINTAINER Dan McDougall <daniel.mcdougall@liftoffsoftware.com>
 
-ENV GATEONE_REPO_URL https://github.com/liftoff/GateOne.git
+ENV GATEONE_REPO_URL https://github.com/jerome-nexedi/GateOne.git
 
 # Ensure everything is up-to-date
 ENV DEBIAN_FRONTEND noninteractive
@@ -48,6 +48,8 @@ RUN apt-get -y \
     python-pam \
     python-dev \
     git \
+    dtach \
+    libpam-pwdfile \
     openssh-client && \
     apt-get -y clean && \
     apt-get -q -y autoremove
@@ -62,8 +64,10 @@ RUN mkdir -p /gateone/logs && \
     git clone $GATEONE_REPO_URL && \
     cd GateOne && \
     python setup.py install && \
-    cp docker/update_and_run_gateone.py /usr/local/bin/update_and_run_gateone && \
-    cp docker/60docker.conf /etc/gateone/conf.d/60docker.conf
+    cp docker/update_and_run_gateone.py /usr/local/bin/update_and_run_gateone
+
+
+RUN apt-get install -y apache2-utils vim
 
 # This ensures our configuration files/dirs are created:
 RUN /usr/local/bin/gateone --configure \
@@ -74,6 +78,14 @@ RUN /usr/local/bin/gateone --configure \
 RUN rm -f /etc/gateone/ssl/key.pem && \
     rm -f /etc/gateone/ssl/certificate.pem
 # (We don't want everyone using the same SSL key/certificate)
+
+ADD 60docker.conf /etc/gateone/conf.d/60docker.conf
+ADD gateone.pam  /etc/pam.d/gateone
+
+# htpasswd -c -d /etc/gateone/users.passwd user1
+# https://wiki.archlinux.org/index.php/Gateone
+ADD users.passwd /etc/gateone/users.passwd
+
 
 EXPOSE 8000
 
